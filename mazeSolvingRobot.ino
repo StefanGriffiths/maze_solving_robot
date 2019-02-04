@@ -1,3 +1,5 @@
+#include <Servo.h>
+
 //Left Motor
 #define ENA 5 //controls speed
 //control motion of left motor
@@ -14,6 +16,12 @@
 #define leftSpeed 200
 #define rightSpeed 200
 #define backSpeed 200
+
+//pins for the ultrasonic sensor
+const int trigPin = A5;
+const int echoPin = A4;
+
+Servo myServo;
 
 void setup() {
   // put your setup code here, to run once:
@@ -45,6 +53,11 @@ void loop() {
   delay(1000);
   stop();
   delay(1000);
+}
+
+void checkLeftDistance(){
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(4);
 }
 
 void stop(){
