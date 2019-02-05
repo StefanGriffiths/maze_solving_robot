@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include "Action.h"
 
 //Left Motor
 #define ENA 5 //controls speed
@@ -13,51 +14,69 @@
 #define IN4 11
 
 #define forwardSpeed 200
-#define leftSpeed 200
-#define rightSpeed 200
+#define turnSpeed 200
 #define backSpeed 200
 
 //pins for the ultrasonic sensor
-const int trigPin = A5;
-const int echoPin = A4;
+#define trigPin A5
+#define echoPin A4
+
+float frontDuration, leftDuration, rightDuration;
+float frontDistance, leftDistance, rightDistance;
+float maxDistance = 20;
 
 Servo myServo;
 
+
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
+  //Motors 
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
   pinMode(ENA, OUTPUT);
   pinMode(ENB, OUTPUT);
-  stop();
+  //Ultrasonic Sensors
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  myServo.attach(3);
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-  moveForward();
-  delay(1000);
-  stop();
-  delay(1000);
-  moveBackward();
-  delay(1000);
-  moveRight();
-  delay(1000);
-  moveLeft();
-  delay(1000);
-  moveForward();
-  delay(1000);
-  moveBackward();
-  delay(1000);
-  stop();
-  delay(1000);
-}
-
-void checkLeftDistance(){
+int checkLeftDistance(){
+  myServo.write(180);
   digitalWrite(trigPin, LOW);
   delayMicroseconds(4);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  leftDuration = pulseIn(echoPin, HIGH);
+  leftDistance = leftDuration * (0.034 / 2);
+  return leftDistance;
+}
+
+int checkRightDistance(){
+  myServo.write(0);
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(4);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  rightDuration = pulseIn(echoPin, HIGH);
+  rightDistance = rightDuration * (0.034 / 2);
+  return rightDistance;
+}
+
+int checkForwardDistance(){
+  myServo.write(90);
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(4);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  frontDuration = pulseIn(echoPin, HIGH);
+  frontDistance = frontDuration * (0.034 / 2);
+  return frontDistance;
 }
 
 void stop(){
@@ -84,8 +103,8 @@ void moveBackward(){
 }
 
 void moveRight(){
-  analogWrite(ENA, rightSpeed);
-  analogWrite(ENB, rightSpeed);
+  analogWrite(ENA, turnSpeed);
+  analogWrite(ENB, turnSpeed);
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, HIGH);
@@ -93,10 +112,48 @@ void moveRight(){
 }
 
 void moveLeft(){
-  analogWrite(ENA, leftSpeed);
-  analogWrite(ENB, leftSpeed);
+  analogWrite(ENA, turnSpeed);
+  analogWrite(ENB, turnSpeed);
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
 }
+
+void loop() {
+  //check the forward distance
+  checkForwardDistance();
+  frontDistance = checkForwardDistance();
+  if(frontDistance < maxDistance)
+  {
+    stop();
+    checkLeftDistance();
+    leftDistance = checkLeftDistance();
+    delay(1000);
+    checkRightDistance();
+    rightDistance = checkRightDistance();
+    delay(1000);
+
+    if(leftDistance < rightDistance)
+    {
+      moveRight();
+    }
+    else if(leftDistance > rightDistance)
+    {
+      moveLeft();
+    }
+  }
+  else 
+  {
+    moveForward();
+  }
+}
+  //if forwardDistance is less than MaxFrontDistance
+    //object is too close
+    //check the left distance 
+    //check the right distance 
+      //if the left distance is less than the right distance 
+        //move right
+      //else if left distance more than right distance 
+        //move left 
+   //otherwise move fowards
